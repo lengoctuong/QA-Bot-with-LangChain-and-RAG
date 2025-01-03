@@ -44,7 +44,7 @@ warnings.filterwarnings('ignore')
 
 # LLM
 def get_hg_llm(task="text2text-generation"):
-    model_name = "google/flan-t5-xxl"
+    model_name = "google/flan-t5-large"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
 
@@ -104,7 +104,7 @@ def retriever(file):
 
 # QA Chain
 def retriever_qa(file, query):
-    llm = get_hg_llm()
+    llm = get_az_llm()
     retriever_obj = retriever(file)
 
     qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever_obj, return_source_documents=False,)
@@ -112,16 +112,20 @@ def retriever_qa(file, query):
 
     return response['result']
 
-if __name__ == 'main':
-    llm = get_hg_llm()
-    retriever_obj = retriever(file)
-    qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever_obj, return_source_documents=False,)
-    app = FastAPI()
+class File():
+    def __init__(self, name):
+        self.name = name
 
-    class Body(BaseModel):
-        text: str
+file = File('./Docs/DE-JD.pdf')
+llm = get_az_llm()
+retriever_obj = retriever(file)
+qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever_obj, return_source_documents=False,)
+app = FastAPI()
 
-    @app.get('/qabot')
-    def predict(body: Body):
-        response = qa.invoke(body.text)
-        return response
+class Body(BaseModel):
+    text: str
+
+@app.get('/qabot')
+def predict(body: Body):
+    response = qa.invoke(body.text)
+    return response
