@@ -1,3 +1,7 @@
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
 # from ibm_watsonx_ai.foundation_models import ModelInference
 # from ibm_watsonx_ai.metanames import GenTextParamsMetaNames as GenParams
 # from ibm_watsonx_ai.metanames import EmbedTextParamsMetaNames
@@ -16,7 +20,7 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.callbacks import get_openai_callback
 from langchain.chains import RetrievalQA
 
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Response, File, UploadFile, Form
 from pydantic import BaseModel
 
 import gradio as gr
@@ -67,7 +71,7 @@ def get_az_llm():
 
 ## Document loader
 def document_loader(file):
-    loader = PyPDFLoader(file.name)
+    loader = PyPDFLoader(file.filename)
     loaded_document = loader.load()
     return loaded_document
 
@@ -83,6 +87,8 @@ def text_splitter(data):
 
 # Vector db
 def vector_database(chunks):
+    global vectordb
+
     embedding_model = AzureOpenAIEmbeddings(
         model="text-embedding-3-large",
         # dimensions: Optional[int] = None, # Can specify dimensions with new text-embedding-3 models
@@ -91,6 +97,8 @@ def vector_database(chunks):
         openai_api_version=os.getenv("AZURE_OPENAI_EMB_API_VERSION"), # If not provided, will read env variable AZURE_OPENAI_API_VERSION
     )
 
+    if vectordb != None:
+        vectordb._collection.delete(vectordb._collection.get()['ids'])
     vectordb = Chroma.from_documents(chunks, embedding_model)
     return vectordb
 
@@ -104,7 +112,7 @@ def retriever(file):
 
 # QA Chain
 def retriever_qa(file, query):
-    llm = get_az_llm()
+    llm = get_hg_llm()
     retriever_obj = retriever(file)
 
     qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever_obj, return_source_documents=False,)
@@ -112,20 +120,36 @@ def retriever_qa(file, query):
 
     return response['result']
 
-class File():
-    def __init__(self, name):
-        self.name = name
-
-file = File('./Docs/DE-JD.pdf')
-llm = get_az_llm()
-retriever_obj = retriever(file)
-qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever_obj, return_source_documents=False,)
+vectordb = None
+llm = get_hg_llm()
+file_name = ""
+retriever_obj = None
+qa = None
 app = FastAPI()
 
-class Body(BaseModel):
-    text: str
+@app.get('/')
+def root():
+    return Response('Chat Bot answering any questions from documents you upload')
 
-@app.get('/qabot')
-def predict(body: Body):
-    response = qa.invoke(body.text)
+@app.post('/qabot')
+def predict(question: str = Form(...), file: UploadFile = File(...)):
+    global llm, file_name, retriever_obj, qa
+
+    # Use file uploaded to create retriever object
+    if retriever_obj == None or file_name != file.filename:
+        file_name = file.filename
+        retriever_obj = retriever(file)
+        qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever_obj, return_source_documents=False,)
+
+    response = qa.invoke(question)
+    response['document'] = file_name
     return response
+
+@app.get('/database')
+def get_database():
+    if vectordb == None:
+        return {'message': 'No database created'}
+    return vectordb._collection.get()
+
+# uvicorn --host 0.0.0.0 --port 7890 QA-Bot-app:app
+# uvicorn --host localhost --port 7890 QA-Bot-app:app

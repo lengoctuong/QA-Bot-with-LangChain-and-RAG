@@ -3,6 +3,7 @@ langchain-community==0.3.13
 langchain-openai==0.2.14
 langchain-huggingface==0.1.2
 chromadb==0.6.1
+pysqlite3-binary==0.5.4
 transformers==4.47.1
 gradio==5.9.1
 pypdf==5.1.0
