@@ -5,9 +5,9 @@
 name: Build and deploy Python app to Azure Web App - qabot
 
 on:
-  push:
-    branches:
-      - main
+  # push:
+  #   branches:
+  #     - main
   workflow_dispatch:
 
 jobs:
