@@ -9,3 +9,5 @@ gradio==5.9.1
 pypdf==5.1.0
 azureml-core==1.59.0
 fastapi==0.115.6
+# nest-asyncio==1.6.0
+# pyngrok7.2.2
