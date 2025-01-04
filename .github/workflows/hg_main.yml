@@ -1,0 +1,23 @@
+name: Sync to Hugging Face hub
+on:
+  # push:
+  #   branches: [main]
+
+  # to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  sync-to-hub:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Add remote 
+        env:
+          HF: ${{ secrets.HUGGINGFACE }}
+        run: git remote add space https://lengoctuong:$HF@huggingface.co/spaces/lengoctuong/demo
+      - name: Push to hub
+        env:
+          HF: ${{ secrets.HUGGINGFACE }}
+        run: git push --force https://lengoctuong:$HF@huggingface.co/spaces/lengoctuong/demo main
