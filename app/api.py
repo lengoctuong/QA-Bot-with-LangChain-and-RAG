@@ -10,6 +10,10 @@ router = APIRouter()
 def root():
     return Response('Chat Bot answering any questions from documents you upload')
 
+@router.get('/test')
+def testapi():
+    return { "code": 200 }
+
 # @router.post('/query')
 # def query_llm(query: str=Form(...), file: UploadFile=File(...)):
 #     try:
