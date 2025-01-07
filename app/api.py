@@ -1,7 +1,7 @@
 import os
 import shutil
 from fastapi import APIRouter, HTTPException, Response, Form, File, UploadFile
-from qa_bot import QA_Bot
+from app.qa_bot import QA_Bot
 
 router = APIRouter()
 qa_bot = QA_Bot()
