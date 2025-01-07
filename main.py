@@ -149,7 +149,7 @@ if __name__ == '__main__':
         description="Upload a PDF document and ask any question. The chatbot will try to answer using the provided document."
     )
 
-    rag_application.launch(server_name="0.0.0.0", server_port= 7890)
+    rag_application.launch(server_name="0.0.0.0", server_port=7890)
 
     # ==================================================
     # Devlop FastAPI
@@ -173,7 +173,7 @@ if __name__ == '__main__':
 
     #     # Use file uploaded to create retriever object
     #     if RETRIEVER_OBJ == None or CUR_FILENAME != new_filename:
-    #         CUR_FILENAME = new_filename
+    #         CUR_FILENAME = new_filenamehttps://github.com/lengoctuong/QA-Bot-with-LangChain-and-RAG/blob/test-no-app/main.py
     #         RETRIEVER_OBJ = retriever(new_filename)
     #         QA_BOT = RetrievalQA.from_chain_type(llm=LLM, chain_type="stuff", retriever=RETRIEVER_OBJ, return_source_documents=False,)
 
