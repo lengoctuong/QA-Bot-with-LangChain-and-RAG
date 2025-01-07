@@ -126,6 +126,8 @@ def retriever_qa(filename, query):
     response = QA_BOT.invoke(query)
     return response['result']
 
+app = FastAPI()
+
 if __name__ == '__main__':
     TOKENIZER = tiktoken.get_encoding(tiktoken.encoding_for_model("text-embedding-3-large").name)
     DATABASE_TOKENS = 0
@@ -134,7 +136,6 @@ if __name__ == '__main__':
     CUR_FILENAME = ""
     RETRIEVER_OBJ = None
     QA_BOT = None
-    app = FastAPI()
     
     # ==================================================
     # Deploy Gradio app
@@ -154,7 +155,7 @@ if __name__ == '__main__':
     # rag_application.launch(share=True)
 
     app = gr.mount_gradio_app(app, rag_application, path="/")
-    uvicorn.run(app, host="localhost", port=7890)
+    uvicorn.run('main:app', host="localhost", port=7890)
 
     # ==================================================
     # Devlop FastAPI
