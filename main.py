@@ -1,6 +1,6 @@
-__import__('pysqlite3')
-import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+# __import__('pysqlite3')
+# import sys
+# sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 # from ibm_watsonx_ai.foundation_models import ModelInference
 # from ibm_watsonx_ai.metanames import GenTextParamsMetaNames as GenParams
