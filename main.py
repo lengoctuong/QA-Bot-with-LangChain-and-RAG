@@ -134,6 +134,7 @@ if __name__ == '__main__':
     CUR_FILENAME = ""
     RETRIEVER_OBJ = None
     QA_BOT = None
+    app = FastAPI()
     
     # ==================================================
     # Deploy Gradio app
@@ -149,11 +150,14 @@ if __name__ == '__main__':
         description="Upload a PDF document and ask any question. The chatbot will try to answer using the provided document."
     )
 
-    rag_application.launch(server_name="0.0.0.0", server_port=7890)
+    # rag_application.launch(server_name="0.0.0.0", server_port=7890)
+    # rag_application.launch(share=True)
+
+    app = gr.mount_gradio_app(app, rag_application, path="/")
+    uvicorn.run('main:app', host="localhost", port=7890)
 
     # ==================================================
     # Devlop FastAPI
-    # app = FastAPI()
 
     # @app.get('/')
     # def root():
