@@ -154,7 +154,7 @@ if __name__ == '__main__':
     # rag_application.launch(share=True)
 
     app = gr.mount_gradio_app(app, rag_application, path="/")
-    uvicorn.run('main:app', host="localhost", port=7890)
+    uvicorn.run('app', host="localhost", port=7890)
 
     # ==================================================
     # Devlop FastAPI
