@@ -5,7 +5,7 @@ langchain-openai==0.2.14
 chromadb==0.6.1
 pysqlite3-binary==0.5.4
 # transformers==4.47.1
-gradio==5.9.1
+gradio==4.44.1
 pypdf==5.1.0
 # azureml-core==1.59.0
 fastapi==0.115.6
