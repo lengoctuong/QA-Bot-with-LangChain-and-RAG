@@ -13,8 +13,8 @@ import tiktoken
 
 from fastapi import HTTPException
 from langchain_openai import AzureOpenAIEmbeddings, AzureOpenAI
-from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, pipeline
-from langchain_huggingface import HuggingFaceEndpoint, HuggingFacePipeline
+# from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, pipeline
+# from langchain_huggingface import HuggingFaceEndpoint, HuggingFacePipeline
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_community.document_loaders import PyPDFLoader
@@ -40,14 +40,14 @@ class LLMService:
                     azure_endpoint=os.getenv('AZURE_OPENAI_ENDPOINT'),
                     max_tokens=max_gen_tokens
                 )
-            elif provider == 'HuggingFace':
-                if local:
-                    tokenizer = AutoTokenizer.from_pretrained(model_name)
-                    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-                    text2text_pipeline = pipeline(task, model=model, tokenizer=tokenizer)
-                    self.model = HuggingFacePipeline(pipeline=text2text_pipeline)
-                else:
-                    self.model = HuggingFaceEndpoint(repo_id=model_name, task=task, max_new_tokens=max_gen_tokens)
+            # elif provider == 'HuggingFace':
+            #     if local:
+            #         tokenizer = AutoTokenizer.from_pretrained(model_name)
+            #         model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+            #         text2text_pipeline = pipeline(task, model=model, tokenizer=tokenizer)
+            #         self.model = HuggingFacePipeline(pipeline=text2text_pipeline)
+            #     else:
+            #         self.model = HuggingFaceEndpoint(repo_id=model_name, task=task, max_new_tokens=max_gen_tokens)
             else:
                 raise HTTPException(status_code=500, detail='Provider got invalid.')
         except Exception as e:
