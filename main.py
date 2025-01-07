@@ -1,6 +1,6 @@
-# __import__('pysqlite3')
-# import sys
-# sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 # from ibm_watsonx_ai.foundation_models import ModelInference
 # from ibm_watsonx_ai.metanames import GenTextParamsMetaNames as GenParams
@@ -24,6 +24,7 @@ from pydantic import BaseModel
 
 import os
 import shutil
+import requests
 import tiktoken
 import uvicorn
 import gradio as gr
@@ -126,89 +127,88 @@ def retriever_qa(filename, query):
     response = QA_BOT.invoke(query)
     return response['result']
 
+def call_query_api(file, query):
+    response = requests.post(
+        "http://127.0.0.1:8000/query",
+        data={"filepath": file.name, "query": query}
+    )
+    return response.json()
+
+TOKENIZER = tiktoken.get_encoding(tiktoken.encoding_for_model("text-embedding-3-large").name)
+DATABASE_TOKENS = 0
+VECTOR_DB = None
+LLM = get_az_llm()
+CUR_FILENAME = ""
+RETRIEVER_OBJ = None
+QA_BOT = None
 app = FastAPI()
 
+@app.get('/')
+def root():
+    return Response('Chat Bot answering any questions from documents you upload')
+
+@app.post('/query')
+def predict(filepath: str = Form(...), query: str = Form(...)):
+    global LLM, CUR_FILENAME, RETRIEVER_OBJ, QA_BOT
+
+    # Copy to repo
+    # upload_folder = "/workspaces/uploads"
+    # os.makedirs(upload_folder, exist_ok=True)
+    # new_filename = os.path.join(upload_folder, file.filename)
+
+    # with open(new_filename, "wb") as buffer:
+    #     shutil.copyfileobj(file.file, buffer)
+
+    # Use file uploaded to create retriever object
+    if RETRIEVER_OBJ == None or CUR_FILENAME != filepath:
+        CUR_FILENAME = filepath
+        RETRIEVER_OBJ = retriever(filepath)
+        QA_BOT = RetrievalQA.from_chain_type(llm=LLM, chain_type="stuff", retriever=RETRIEVER_OBJ, return_source_documents=False,)
+
+    response = QA_BOT.invoke(query)
+    response['document'] = CUR_FILENAME
+    return response
+
+@app.get('/database')
+def get_database():
+    if VECTOR_DB == None:
+        return {'metadatas': 'No database created'}
+
+    return {'total_tokens': sum(DATABASE_TOKENS),
+            'documents': VECTOR_DB._collection.get()['documents'],
+            'metadatas': VECTOR_DB._collection.get()['metadatas'],}
+
+# uvicorn.run('main:app', host="localhost", port=7890)
+# !uvicorn --host 0.0.0.0 --port 7890 Apps.QA-Bot-app:app
+# !uvicorn --host localhost --port 7890 Apps.QA-Bot-app:app
+
+# ==================================================
+# Public API with ngrok
+# !ngrok config add-authtoken 2r8PSD3kuD5efFOEcPL1LcR7nDE_69ZHgHFAZ8br8nWiMGGdS
+
+# from pyngrok import ngrok
+# import nest_asyncio
+
+# ngrok_tunnel = ngrok.connect(8000)
+# print('Public URL:', ngrok_tunnel.public_url)
+# nest_asyncio.apply()
+
+# uvicorn.run('main:app', port=8000)
+
 if __name__ == '__main__':
-    TOKENIZER = tiktoken.get_encoding(tiktoken.encoding_for_model("text-embedding-3-large").name)
-    DATABASE_TOKENS = 0
-    VECTOR_DB = None
-    LLM = get_az_llm()
-    CUR_FILENAME = ""
-    RETRIEVER_OBJ = None
-    QA_BOT = None
-    
-    # ==================================================
-    # Deploy Gradio app
     rag_application = gr.Interface(
-        fn=retriever_qa,
+        fn=call_query_api,
         allow_flagging="never",
         inputs=[
             gr.File(label="Upload PDF File", file_count="single", file_types=['.pdf'], type="filepath"),  # Drag and drop file upload
             gr.Textbox(label="Input Query", lines=2, placeholder="Type your question here...")
         ],
-        outputs=gr.Textbox(label="Output"),
+        outputs=gr.JSON(label="Output"),
         title="RAG Chatbot",
         description="Upload a PDF document and ask any question. The chatbot will try to answer using the provided document."
     )
 
     # rag_application.launch(server_name="0.0.0.0", server_port=7890)
-    # rag_application.launch(share=True)
+    rag_application.launch(share=True)
 
-    app = gr.mount_gradio_app(app, rag_application, path="/")
-    uvicorn.run('main:app', host="localhost", port=7890)
-
-    # ==================================================
-    # Devlop FastAPI
-
-    # @app.get('/')
-    # def root():
-    #     return Response('Chat Bot answering any questions from documents you upload')
-
-    # @app.post('/qabot')
-    # def predict(query: str = Form(...), file: UploadFile = File(...)):
-    #     global LLM, CUR_FILENAME, RETRIEVER_OBJ, QA_BOT
-
-    #     # Copy to repo
-    #     upload_folder = "/workspaces/uploads"
-    #     os.makedirs(upload_folder, exist_ok=True)
-    #     new_filename = os.path.join(upload_folder, file.filename)
-
-    #     with open(new_filename, "wb") as buffer:
-    #         shutil.copyfileobj(file.file, buffer)
-
-    #     # Use file uploaded to create retriever object
-    #     if RETRIEVER_OBJ == None or CUR_FILENAME != new_filename:
-    #         CUR_FILENAME = new_filenamehttps://github.com/lengoctuong/QA-Bot-with-LangChain-and-RAG/blob/test-no-app/main.py
-    #         RETRIEVER_OBJ = retriever(new_filename)
-    #         QA_BOT = RetrievalQA.from_chain_type(llm=LLM, chain_type="stuff", retriever=RETRIEVER_OBJ, return_source_documents=False,)
-
-    #     response = QA_BOT.invoke(query)
-    #     response['document'] = CUR_FILENAME
-    #     return response
-
-    # @app.get('/database')
-    # def get_database():
-    #     if VECTOR_DB == None:
-    #         return {'metadatas': 'No database created'}
-
-    #     return {'total_tokens': sum(DATABASE_TOKENS),
-    #             'documents': VECTOR_DB._collection.get()['documents'],
-    #             'metadatas': VECTOR_DB._collection.get()['metadatas'],}
-
-    # uvicorn.run(app, host="localhost", port=7890)
-    # !uvicorn --host 0.0.0.0 --port 7890 Apps.QA-Bot-app:app
-    # !uvicorn --host localhost --port 7890 Apps.QA-Bot-app:app
-
-
-    # ==================================================
-    # Deyploy API with ngrok
-    # !ngrok config add-authtoken 2r8PSD3kuD5efFOEcPL1LcR7nDE_69ZHgHFAZ8br8nWiMGGdS
-
-    # from pyngrok import ngrok
-    # import nest_asyncio
-
-    # ngrok_tunnel = ngrok.connect(8000)
-    # print('Public URL:', ngrok_tunnel.public_url)
-    # nest_asyncio.apply()
-
-    # uvicorn.run(app, port=8000)
+    app = gr.mount_gradio_app(app, rag_application, path="/query")
