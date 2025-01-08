@@ -147,27 +147,27 @@ app = FastAPI()
 def root():
     return Response('Chat Bot answering any questions from documents you upload')
 
-@app.post('/query')
-def predict(filepath: str = Form(...), query: str = Form(...)):
-    global LLM, CUR_FILENAME, RETRIEVER_OBJ, QA_BOT
+# @app.post('/query')
+# def predict(filepath: str = Form(...), query: str = Form(...)):
+#     global LLM, CUR_FILENAME, RETRIEVER_OBJ, QA_BOT
 
-    # Copy to repo
-    # upload_folder = "/workspaces/uploads"
-    # os.makedirs(upload_folder, exist_ok=True)
-    # new_filename = os.path.join(upload_folder, file.filename)
+#     # Copy to repo
+#     # upload_folder = "/workspaces/uploads"
+#     # os.makedirs(upload_folder, exist_ok=True)
+#     # new_filename = os.path.join(upload_folder, file.filename)
 
-    # with open(new_filename, "wb") as buffer:
-    #     shutil.copyfileobj(file.file, buffer)
+#     # with open(new_filename, "wb") as buffer:
+#     #     shutil.copyfileobj(file.file, buffer)
 
-    # Use file uploaded to create retriever object
-    if RETRIEVER_OBJ == None or CUR_FILENAME != filepath:
-        CUR_FILENAME = filepath
-        RETRIEVER_OBJ = retriever(filepath)
-        QA_BOT = RetrievalQA.from_chain_type(llm=LLM, chain_type="stuff", retriever=RETRIEVER_OBJ, return_source_documents=False,)
+#     # Use file uploaded to create retriever object
+#     if RETRIEVER_OBJ == None or CUR_FILENAME != filepath:
+#         CUR_FILENAME = filepath
+#         RETRIEVER_OBJ = retriever(filepath)
+#         QA_BOT = RetrievalQA.from_chain_type(llm=LLM, chain_type="stuff", retriever=RETRIEVER_OBJ, return_source_documents=False,)
 
-    response = QA_BOT.invoke(query)
-    response['document'] = CUR_FILENAME
-    return response
+#     response = QA_BOT.invoke(query)
+#     response['document'] = CUR_FILENAME
+#     return response
 
 @app.get('/database')
 def get_database():
@@ -195,20 +195,20 @@ def get_database():
 
 # uvicorn.run('main:app', port=8000)
 
-if __name__ == '__main__':
-    rag_application = gr.Interface(
-        fn=call_query_api,
-        allow_flagging="never",
-        inputs=[
-            gr.File(label="Upload PDF File", file_count="single", file_types=['.pdf'], type="filepath"),  # Drag and drop file upload
-            gr.Textbox(label="Input Query", lines=2, placeholder="Type your question here...")
-        ],
-        outputs=gr.JSON(label="Output"),
-        title="RAG Chatbot",
-        description="Upload a PDF document and ask any question. The chatbot will try to answer using the provided document."
-    )
+# if __name__ == '__main__':
+rag_application = gr.Interface(
+    fn=retriever_qa,
+    allow_flagging="never",
+    inputs=[
+        gr.File(label="Upload PDF File", file_count="single", file_types=['.pdf'], type="filepath"),  # Drag and drop file upload
+        gr.Textbox(label="Input Query", lines=2, placeholder="Type your question here...")
+    ],
+    outputs=gr.JSON(label="Output"),
+    title="RAG Chatbot",
+    description="Upload a PDF document and ask any question. The chatbot will try to answer using the provided document."
+)
 
-    # rag_application.launch(server_name="0.0.0.0", server_port=7890)
-    rag_application.launch(share=True)
+# rag_application.launch(server_name="0.0.0.0", server_port=7890)
+# rag_application.launch(share=True)
 
-    app = gr.mount_gradio_app(app, rag_application, path="/query")
+app = gr.mount_gradio_app(app, rag_application, path="/query")
