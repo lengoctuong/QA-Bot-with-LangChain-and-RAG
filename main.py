@@ -1,6 +1,6 @@
-__import__('pysqlite3')
-import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+# __import__('pysqlite3')
+# import sys
+# sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 # from ibm_watsonx_ai.foundation_models import ModelInference
 # from ibm_watsonx_ai.metanames import GenTextParamsMetaNames as GenParams
@@ -125,7 +125,8 @@ def retriever_qa(filename, query):
         QA_BOT = RetrievalQA.from_chain_type(llm=LLM, chain_type="stuff", retriever=RETRIEVER_OBJ, return_source_documents=False,)
     
     response = QA_BOT.invoke(query)
-    return response['result']
+    response['document'] = CUR_FILENAME
+    return response
 
 def call_query_api(file, query):
     response = requests.post(
@@ -169,33 +170,6 @@ def root():
 #     response['document'] = CUR_FILENAME
 #     return response
 
-@app.get('/database')
-def get_database():
-    if VECTOR_DB == None:
-        return {'metadatas': 'No database created'}
-
-    return {'total_tokens': sum(DATABASE_TOKENS),
-            'documents': VECTOR_DB._collection.get()['documents'],
-            'metadatas': VECTOR_DB._collection.get()['metadatas'],}
-
-# uvicorn.run('main:app', host="localhost", port=7890)
-# !uvicorn --host 0.0.0.0 --port 7890 Apps.QA-Bot-app:app
-# !uvicorn --host localhost --port 7890 Apps.QA-Bot-app:app
-
-# ==================================================
-# Public API with ngrok
-# !ngrok config add-authtoken 2r8PSD3kuD5efFOEcPL1LcR7nDE_69ZHgHFAZ8br8nWiMGGdS
-
-# from pyngrok import ngrok
-# import nest_asyncio
-
-# ngrok_tunnel = ngrok.connect(8000)
-# print('Public URL:', ngrok_tunnel.public_url)
-# nest_asyncio.apply()
-
-# uvicorn.run('main:app', port=8000)
-
-# if __name__ == '__main__':
 rag_application = gr.Interface(
     fn=retriever_qa,
     allow_flagging="never",
@@ -208,7 +182,26 @@ rag_application = gr.Interface(
     description="Upload a PDF document and ask any question. The chatbot will try to answer using the provided document."
 )
 
-# rag_application.launch(server_name="0.0.0.0", server_port=7890)
-# rag_application.launch(share=True)
-
 app = gr.mount_gradio_app(app, rag_application, path="/query")
+
+@app.get('/database')
+def get_database():
+    if VECTOR_DB == None:
+        return {'metadatas': 'No database created'}
+
+    return {'total_tokens': sum(DATABASE_TOKENS),
+            'documents': VECTOR_DB._collection.get()['documents'],
+            'metadatas': VECTOR_DB._collection.get()['metadatas'],}
+
+# ==================================================
+# Public API with ngrok
+# !ngrok config add-authtoken AUTHTOKEN_KEY
+
+# from pyngrok import ngrok
+# import nest_asyncio
+
+# ngrok_tunnel = ngrok.connect(8000)
+# print('Public URL:', ngrok_tunnel.public_url)
+# nest_asyncio.apply()
+
+# uvicorn.run('main:app', port=8000)
