@@ -175,7 +175,7 @@ if __name__ == 'main':
 
     # ==================================================
     # Deyploy API with ngrok
-    # !ngrok config add-authtoken 2r8PSD3kuD5efFOEcPL1LcR7nDE_69ZHgHFAZ8br8nWiMGGdS
+    # !ngrok config add-authtoken AUTHTOKEN_KEY
 
     # from pyngrok import ngrok
     # import nest_asyncio
