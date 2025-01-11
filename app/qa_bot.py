@@ -35,7 +35,7 @@ class LLMService:
             if provider == 'AzureOpenAI':
                 self.model = AzureOpenAI(
                     api_key=os.getenv('AZURE_OPENAI_API_KEY'),
-                    api_version=os.getenv('OPENAI_API_VERSION'),
+                    api_version="2024-02-01",
                     azure_deployment=model_name,
                     azure_endpoint=os.getenv('AZURE_OPENAI_ENDPOINT'),
                     max_tokens=max_gen_tokens
@@ -62,7 +62,7 @@ class EmbeddingService:
             self.model = AzureOpenAIEmbeddings(
                 model=model_name,
                 azure_endpoint=os.getenv('AZURE_OPENAI_EMB_ENDPOINT'),
-                api_key=os.getenv('AZURE_OPENAI_EMB_API_KEY'),
+                api_key="2023-05-15",
                 openai_api_version=os.getenv('AZURE_OPENAI_EMB_API_VERSION')
             )
         except Exception as e:
