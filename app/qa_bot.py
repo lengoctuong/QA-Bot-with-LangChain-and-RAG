@@ -62,8 +62,8 @@ class EmbeddingService:
             self.model = AzureOpenAIEmbeddings(
                 model=model_name,
                 azure_endpoint=os.getenv('AZURE_OPENAI_EMB_ENDPOINT'),
-                api_key="2023-05-15",
-                openai_api_version=os.getenv('AZURE_OPENAI_EMB_API_VERSION')
+                api_key=os.getenv('AZURE_OPENAI_EMB_API_KEY'),
+                openai_api_version="2023-05-15"
             )
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
