@@ -13,4 +13,4 @@ format:
 	black *.py
 	black app/*.py
 
-all: install lint test format deploy
+build: install lint test format
