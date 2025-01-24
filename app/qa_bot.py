@@ -23,7 +23,7 @@ from langchain.chains import RetrievalQA
 class LLMService:
     '''
     provider in ['AzureOpenAI', 'HuggingFace']
-    model_name: e.g 'gpt-35-turbo-instruct', 'google/flan-t5-large',...
+    model_name: e.g 'gpt-35-turbo', 'google/flan-t5-large',...
     '''
 
     def __init__(self, provider='HuggingFace', model_name='google/flan-t5-large', max_gen_tokens=512, task='text2text-generation', local=True):
@@ -35,7 +35,7 @@ class LLMService:
             if provider == 'AzureOpenAI':
                 self.model = AzureOpenAI(
                     api_key=os.getenv('AZURE_OPENAI_API_KEY'),
-                    api_version="2024-02-01",
+                    api_version="2024-08-01-preview",
                     azure_deployment=model_name,
                     azure_endpoint=os.getenv('AZURE_OPENAI_ENDPOINT'),
                     max_tokens=max_gen_tokens
