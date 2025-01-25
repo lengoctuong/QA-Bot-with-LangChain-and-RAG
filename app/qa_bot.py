@@ -12,7 +12,7 @@ import os
 import tiktoken
 
 from fastapi import HTTPException
-from langchain_openai import AzureOpenAIEmbeddings, AzureOpenAI
+from langchain_openai import AzureOpenAIEmbeddings, AzureChatOpenAI
 # from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, pipeline
 # from langchain_huggingface import HuggingFaceEndpoint, HuggingFacePipeline
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -33,7 +33,7 @@ class LLMService:
 
         try:
             if provider == 'AzureOpenAI':
-                self.model = AzureOpenAI(
+                self.model = AzureChatOpenAI(
                     api_key=os.getenv('AZURE_OPENAI_API_KEY'),
                     api_version="2024-08-01-preview",
                     azure_deployment=model_name,
