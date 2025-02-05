@@ -69,7 +69,7 @@ class EmbeddingService:
             raise HTTPException(status_code=500, detail=str(e))
 
 class QA_Bot:
-    def __init__(self, llm_service=LLMService('AzureOpenAI', 'gpt-35-turbo-instruct'), embedding_service=EmbeddingService()):
+    def __init__(self, llm_service=LLMService('AzureOpenAI', 'gpt-35-turbo'), embedding_service=EmbeddingService()):
         self.llm_service = llm_service
         self.embedding_service = embedding_service
         self.file_path = None
