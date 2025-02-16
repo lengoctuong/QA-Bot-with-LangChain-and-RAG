@@ -32,11 +32,6 @@ jobs:
         
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
       - name: Test app
-        env:
-          AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
-          AZURE_OPENAI_EMB_API_KEY: ${{ secrets.AZURE_OPENAI_EMB_API_KEY }}
-          AZURE_OPENAI_EMB_ENDPOINT: ${{ secrets.AZURE_OPENAI_EMB_ENDPOINT }}
-          AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
         run: |
           sudo apt update; sudo apt install sqlite3
           curl -s https://raw.githubusercontent.com/lerocha/chinook-database/master/ChinookDatabase/DataSources/Chinook_Sqlite.sql | sqlite3 Chinook.db
