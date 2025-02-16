@@ -4,7 +4,7 @@ install:
 
 # lint:
 # 	pylint --disable=R,C 
-# 	#docker run --rm -i hadolint/hadolint < Dockerfile
+# 	docker run --rm -i hadolint/hadolint < Dockerfile
 
 test:
 	pytest tests

@@ -32,6 +32,11 @@ jobs:
         
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
       - name: Test app
+        env:
+          AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+          AZURE_OPENAI_EMB_API_KEY: ${{ secrets.AZURE_OPENAI_EMB_API_KEY }}
+          AZURE_OPENAI_EMB_ENDPOINT: ${{ secrets.AZURE_OPENAI_EMB_ENDPOINT }}
+          AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
         run: pytest tests
 
       - name: Zip artifact for deployment
