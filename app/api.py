@@ -32,16 +32,6 @@ def query_docs(query: str=Form(...), file: UploadFile=File(...)):
 @router.post('/query-dbs')
 def query_dbs(query: str=Form(...)):
     try:
-        # if rag_bot.file_path == None or os.path.basename(rag_bot.file_path) != file.filename:
-        #     upload_folder = '/tmp/qabot-app'
-        #     os.makedirs(upload_folder, exist_ok=True)
-        #     new_file_path = os.path.join(upload_folder, file.filename)
-
-        #     with open(new_file_path, 'wb') as buffer:
-        #         shutil.copyfileobj(file.file, buffer)
-
-        #     rag_bot.update_db(new_file_path)
-
         for s in sql_bot.graph.stream({"messages": [("user", query)]}, {"configurable": {"thread_id": str(uuid4())}}):
             print(s)
 
