@@ -1,10 +1,22 @@
-import sys
+import os
+import shutil
 import uvicorn
+import gradio as gr
+import pdf_page, sql_page
 from fastapi import FastAPI
-from app.api import router
 
 app = FastAPI()
-app.include_router(router)
 
-if __name__ == '__main__':
-    uvicorn.run('main:app', host='0.0.0.0', port=8080)
+with gr.Blocks() as interface:
+    gr.Markdown("# AI Agents for Question-Answer")
+
+    with gr.Tab("PDF Agent"):
+        pdf_page.page.render()
+
+    with gr.Tab("SQL Agent"):
+        sql_page.page.render()
+
+app = gr.mount_gradio_app(app, interface, path="/")
+
+if __name__ == "__main__":
+    interface.launch()

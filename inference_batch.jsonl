@@ -1,0 +1,2 @@
+{"custom_id": "task-0", "method": "POST", "url": "/chat/completions", "body": {"model": "gpt-35-turbo-batch
+", "messages": [{"role": "system", "content": "You are an AI assistant that helps people find information."}, {"role": "user", "content": "Hi"}]}}
