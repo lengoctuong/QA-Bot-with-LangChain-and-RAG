@@ -3,7 +3,7 @@ import shutil
 import uvicorn
 import gradio as gr
 from fastapi import FastAPI
-from app.qa_bot import RAG_Bot
+from chatbots.qa_bot import RAG_Bot
 
 rag_bot = RAG_Bot()
 

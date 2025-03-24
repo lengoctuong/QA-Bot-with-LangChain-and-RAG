@@ -41,29 +41,33 @@ from langchain_core.runnables.graph import MermaidDrawMethod
 from langchain_core.vectorstores import InMemoryVectorStore
 
 from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
+from langchain_azure_ai.chat_models import AzureAIChatCompletionsModel
+from langchain_google_genai import ChatGoogleGenerativeAI
+
 # from langchain_huggingface import HuggingFaceEndpoint, HuggingFacePipeline
 # from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, pipeline
 
 class LLMService:
     '''
-    provider in ['AzureOpenAI', 'HuggingFace']
-    model_name: e.g 'gpt-35-turbo', 'google/flan-t5-large',...
+    provider in ['AzureOpenAI', 'Google', 'HuggingFace']
+    model_name: e.g 'gpt-35-turbo', 'DeepSeek-R1-houab', gemini-2.0-flash, 'google/flan-t5-large',...
     '''
 
-    def __init__(self, provider='HuggingFace', model_name='google/flan-t5-large', max_gen_tokens=512, task='text2text-generation', local=True):
+    def __init__(self, provider='AzureOpenAI', model_name='DeepSeek-R1-houab', max_gen_tokens=512, task='text2text-generation', local=True):
         self.provider = provider
         self.model_name = model_name
         self.max_gen_tokens = max_gen_tokens
 
         try:
             if provider == 'AzureOpenAI':
-                self.model = AzureChatOpenAI(
-                    api_key=os.getenv('AZURE_OPENAI_API_KEY'),
-                    api_version="2024-08-01-preview",
-                    azure_deployment=model_name,
-                    azure_endpoint=os.getenv('AZURE_OPENAI_ENDPOINT'),
-                    max_tokens=max_gen_tokens
-                )
+                if model_name == "gpt-35-turbo-16k":
+                    self.model = AzureChatOpenAI(api_version="2024-08-01-preview", azure_deployment=model_name, max_tokens=max_gen_tokens)
+                elif model_name == "DeepSeek-R1-houab":
+                    self.model = AzureAIChatCompletionsModel(model_name=model_name, max_tokens=max_gen_tokens)
+                else:
+                    raise HTTPException(status_code=500, detail='Model name is not supported.')
+            elif provider == 'Google':
+                self.model = ChatGoogleGenerativeAI(model=model_name, max_tokens=max_gen_tokens)
             # elif provider == 'HuggingFace':
             #     if local:
             #         tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -73,7 +77,7 @@ class LLMService:
             #     else:
             #         self.model = HuggingFaceEndpoint(repo_id=model_name, task=task, max_new_tokens=max_gen_tokens)
             else:
-                raise HTTPException(status_code=500, detail='Provider got invalid.')
+                raise HTTPException(status_code=500, detail='Provider is not supported.')
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
@@ -93,7 +97,7 @@ class EmbeddingService:
             raise HTTPException(status_code=500, detail=str(e))
 
 class RAG_Bot:
-    def __init__(self, llm_service=LLMService('AzureOpenAI', 'gpt-35-turbo-16k'), embedding_service=EmbeddingService()):
+    def __init__(self, llm_service=LLMService('AzureOpenAI', 'DeepSeek-R1-houab'), embedding_service=EmbeddingService()):
         self.llm_service = llm_service
         self.embedding_service = embedding_service
         self.file_path = None

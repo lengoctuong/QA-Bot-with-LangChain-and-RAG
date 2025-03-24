@@ -3,7 +3,7 @@ import shutil
 import uvicorn
 import gradio as gr
 from fastapi import FastAPI
-from app.qa_bot import SQL_Bot
+from chatbots.qa_bot import SQL_Bot
 from uuid import uuid4
 
 sql_bot = SQL_Bot()

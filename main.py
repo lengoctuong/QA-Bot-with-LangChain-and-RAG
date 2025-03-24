@@ -1,22 +1,22 @@
-import os
-import shutil
-import uvicorn
-import gradio as gr
-import pdf_page, sql_page
-from fastapi import FastAPI
+from flask import Flask, request, render_template
+import json
 
-app = FastAPI()
+# Web App Source
+# https://github.com/ibm-developer-skills-network/LLM_application_chatbot
 
-with gr.Blocks() as interface:
-    gr.Markdown("# AI Agents for Question-Answer")
+app = Flask(__name__)
 
-    with gr.Tab("PDF Agent"):
-        pdf_page.page.render()
+@app.route('/', methods=['GET'])
+def home():
+    return render_template('index.html')
 
-    with gr.Tab("SQL Agent"):
-        sql_page.page.render()
+@app.route('/ragbot', methods=['POST'])
+def handle_prompt_with_rag():
+    data = request.get_data(as_text=True)
+    data = json.loads(data)
+    input_text = data['prompt']
 
-app = gr.mount_gradio_app(app, interface, path="/")
+    return json.dumps({'response': 'Hello, World!'})
 
-if __name__ == "__main__":
-    interface.launch()
+if __name__ == '__main__':
+    app.run()
