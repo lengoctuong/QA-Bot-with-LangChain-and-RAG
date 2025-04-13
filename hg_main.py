@@ -1,7 +1,7 @@
 import os
 import shutil
 import gradio as gr
-from chatbots.qa_bot import RAG_Bot
+from chatbots.llms import RAG_Bot
 
 rag_bot = RAG_Bot()
 

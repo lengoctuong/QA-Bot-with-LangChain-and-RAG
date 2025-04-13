@@ -3,7 +3,7 @@ from fastapi import HTTPException
 from unstructured.partition.pdf import partition_pdf
 from pydantic import BaseModel, Field
 from typing_extensions import TypedDict, Annotated
-from chatbots.qa_bot import LLMService, EmbeddingService
+from chatbots.llms import LLMService, EmbeddingService
 
 from langchain.storage import InMemoryStore
 from langchain.vectorstores import Chroma

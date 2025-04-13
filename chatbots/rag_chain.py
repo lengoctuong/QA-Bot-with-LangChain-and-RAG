@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from .qa_bot import LLMService, EmbeddingService
+from .llms import LLMService, EmbeddingService
 from langchain.vectorstores import Chroma
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains import RetrievalQA

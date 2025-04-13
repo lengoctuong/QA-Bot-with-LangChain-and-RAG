@@ -1,4 +1,4 @@
-from chatbots import qa_bot
+from chatbots import llms
 import unittest
 
 class TestChatbots(unittest.TestCase):

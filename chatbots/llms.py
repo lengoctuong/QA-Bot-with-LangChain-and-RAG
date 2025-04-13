@@ -1,7 +1,6 @@
 import os
 import tiktoken
 from fastapi import HTTPException
-from langchain_community.chat_models.huggingface import ChatHuggingFace
 from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
 from langchain_azure_ai.chat_models import AzureAIChatCompletionsModel
 from langchain_google_genai import ChatGoogleGenerativeAI

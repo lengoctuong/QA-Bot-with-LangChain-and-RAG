@@ -2,7 +2,7 @@ import os
 import shutil
 from uuid import uuid4
 from fastapi import APIRouter, HTTPException, Response, Form, File, UploadFile
-from chatbots.qa_bot import RAG_Bot, SQL_Bot
+from chatbots.llms import RAG_Bot, SQL_Bot
 
 router = APIRouter()
 rag_bot = RAG_Bot()
