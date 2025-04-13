@@ -1,9 +1,5 @@
-import os
-import shutil
-import uvicorn
 import gradio as gr
-from fastapi import FastAPI
-from app.qa_bot import SQL_Bot
+from chatbots.sql_bot import SQL_Bot
 from uuid import uuid4
 
 sql_bot = SQL_Bot()
@@ -11,7 +7,7 @@ sql_bot = SQL_Bot()
 def query_dbs(query, file):
     try:
         for s in sql_bot.graph.stream({"messages": [("user", query)]}, {"configurable": {"thread_id": str(uuid4())}}):
-            print(s)
+            pass
 
         return s['model_gen_query']['messages'][0].tool_calls[0]['args']['final_answer']
     except Exception as e:

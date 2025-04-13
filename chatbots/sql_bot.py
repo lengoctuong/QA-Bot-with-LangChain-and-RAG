@@ -2,24 +2,14 @@ __import__('pysqlite3')
 import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
-def warn(*args, **kwargs):
-    pass
-import warnings
-warnings.warn = warn
-warnings.filterwarnings('ignore')
-
-import os, tiktoken, re, ast, hashlib
+import os, re, ast
 
 from typing import Any, Annotated, Literal
 from pydantic import BaseModel, Field
 from typing_extensions import TypedDict
 from IPython.display import Image, display
 from uuid import uuid4
-from fastapi import HTTPException
 
-from langchain import hub
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.chains import RetrievalQA
 from langchain.agents.agent_toolkits import create_retriever_tool
 
 from langgraph.prebuilt import ToolNode
@@ -27,8 +17,6 @@ from langgraph.graph import END, StateGraph, START
 from langgraph.graph.message import AnyMessage, add_messages
 from langgraph.checkpoint.memory import MemorySaver
 
-from langchain_community.vectorstores import Chroma
-from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.utilities import SQLDatabase
 from langchain_community.agent_toolkits import SQLDatabaseToolkit
 
@@ -41,95 +29,8 @@ from langchain_core.runnables.graph import MermaidDrawMethod
 from langchain_core.vectorstores import InMemoryVectorStore
 
 from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
-# from langchain_huggingface import HuggingFaceEndpoint, HuggingFacePipeline
-# from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, pipeline
 
-class LLMService:
-    '''
-    provider in ['AzureOpenAI', 'HuggingFace']
-    model_name: e.g 'gpt-35-turbo', 'google/flan-t5-large',...
-    '''
-
-    def __init__(self, provider='HuggingFace', model_name='google/flan-t5-large', max_gen_tokens=512, task='text2text-generation', local=True):
-        self.provider = provider
-        self.model_name = model_name
-        self.max_gen_tokens = max_gen_tokens
-
-        try:
-            if provider == 'AzureOpenAI':
-                self.model = AzureChatOpenAI(
-                    api_key=os.getenv('AZURE_OPENAI_API_KEY'),
-                    api_version="2024-08-01-preview",
-                    azure_deployment=model_name,
-                    azure_endpoint=os.getenv('AZURE_OPENAI_ENDPOINT'),
-                    max_tokens=max_gen_tokens
-                )
-            # elif provider == 'HuggingFace':
-            #     if local:
-            #         tokenizer = AutoTokenizer.from_pretrained(model_name)
-            #         model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-            #         text2text_pipeline = pipeline(task, model=model, tokenizer=tokenizer)
-            #         self.model = HuggingFacePipeline(pipeline=text2text_pipeline)
-            #     else:
-            #         self.model = HuggingFaceEndpoint(repo_id=model_name, task=task, max_new_tokens=max_gen_tokens)
-            else:
-                raise HTTPException(status_code=500, detail='Provider got invalid.')
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-
-class EmbeddingService:
-    def __init__(self, model_name='text-embedding-3-large'):
-        self.model_name = model_name
-
-        try:
-            self.tokenizer = tiktoken.get_encoding(tiktoken.encoding_for_model(model_name).name)
-            self.model = AzureOpenAIEmbeddings(
-                model=model_name,
-                azure_endpoint=os.getenv('AZURE_OPENAI_EMB_ENDPOINT'),
-                api_key=os.getenv('AZURE_OPENAI_EMB_API_KEY'),
-                openai_api_version="2023-05-15"
-            )
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-
-class RAG_Bot:
-    def __init__(self, llm_service=LLMService('AzureOpenAI', 'gpt-35-turbo-16k'), embedding_service=EmbeddingService()):
-        self.llm_service = llm_service
-        self.embedding_service = embedding_service
-        self.file_path = None
-        self.db_tokens = []
-        self.vector_db = None
-        self.retrieval_chain = None
-
-    def update_db(self, file_path, chunk_size=1000, chunk_overlap=50, length_function=len):
-        self.file_path = file_path
-        try:
-            # Document loader
-            loader = PyPDFLoader(file_path)
-            loaded_document = loader.load()
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-
-        # Text splitter
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap, length_function=len)
-        chunks = text_splitter.split_documents(loaded_document)
-        self.db_tokens = [len(self.embedding_service.tokenizer.encode(chunk.page_content)) for chunk in chunks]
-
-        # Vector db
-        if self.vector_db != None:
-            self.vector_db._collection.delete(self.vector_db._collection.get()['ids'])
-        self.vector_db = Chroma.from_documents(chunks, self.embedding_service.model)
-
-        # Retrieval chain
-        retriever = self.vector_db.as_retriever()
-        self.retrieval_chain = RetrievalQA.from_chain_type(llm=self.llm_service.model, chain_type='stuff', retriever=retriever, return_source_documents=False)
-
-    def __call__(self, query):
-        response = self.retrieval_chain.invoke(query)
-        response['document'] = self.file_path
-        return response
-
-class State(TypedDict):
+class SqlBotState(TypedDict):
     messages: Annotated[list[AnyMessage], add_messages]
 
 def create_tool_node_with_fallback(tools: list) -> RunnableWithFallbacks[Any, dict]:
@@ -233,7 +134,7 @@ class SQL_Bot:
             )
 
         # Define a graph
-        graph = StateGraph(State)
+        graph = StateGraph(SqlBotState)
         graph.add_node("first_tool_call", self.first_tool_call)
         graph.add_node("list_tables_tool", create_tool_node_with_fallback([self.list_tables_tool]))
         graph.add_node("model_get_schema", self.model_get_schema)
@@ -299,18 +200,18 @@ class SQL_Bot:
         """Submit the final answer to the user based on the query results."""
         final_answer: str = Field(..., description="The final answer to the user")
 
-    def first_tool_call(self, state: State) -> dict[str, list[AIMessage]]:
+    def first_tool_call(self, state: SqlBotState) -> dict[str, list[AIMessage]]:
         return {"messages": [AIMessage(content="", tool_calls=[{
                     "name": "sql_db_list_tables", "args": {}, "id": str(uuid4())
                 }])]}
 
-    def model_get_schema(self, state: State):
+    def model_get_schema(self, state: SqlBotState):
         return {"messages": [self.schema_get.invoke({"messages": state["messages"]})]}
     
-    def model_retrieve_noun(self, state: State) -> dict[str, list[AIMessage]]:
+    def model_retrieve_noun(self, state: SqlBotState) -> dict[str, list[AIMessage]]:
         return {"messages": [self.noun_retrieve.invoke({"messages": state["messages"]})]}
 
-    def have_proper_noun(self, state: State) -> Literal["retrieve_noun_tool", "query_db_tool"]:
+    def have_proper_noun(self, state: SqlBotState) -> Literal["retrieve_noun_tool", "query_db_tool"]:
         messages = state["messages"]
         last_message = messages[-1]
         if getattr(last_message, "tool_calls", None):
@@ -319,11 +220,11 @@ class SQL_Bot:
             if last_message.tool_calls[0]["name"] == "sql_db_query":
                 return "query_db_tool"
             
-    def model_gen_query(self, state: State):
+    def model_gen_query(self, state: SqlBotState):
         return {"messages": [self.query_gen.invoke({"messages": state["messages"]})]}
     
     # Define a conditional edge to decide whether to continue or end the workflow
-    def should_continue(self, state: State) -> Literal[END, "query_db_tool"]:
+    def should_continue(self, state: SqlBotState) -> Literal[END, "query_db_tool"]:
         messages = state["messages"]
         last_message = messages[-1]
                 
@@ -334,7 +235,7 @@ class SQL_Bot:
             if last_message.tool_calls[0]["name"] == "sql_db_query":
                 return "query_db_tool"
         
-    def count_retry_call(self, state: State):
+    def count_retry_call(self, state: SqlBotState):
         count = 0
         for mess in state["messages"]:
             if getattr(mess, "tool_calls", None):
