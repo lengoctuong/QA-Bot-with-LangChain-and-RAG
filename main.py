@@ -1,22 +1,48 @@
-from flask import Flask, request, render_template
-import json
+import gradio as gr
+import pdf_page, sql_page
+from fastapi import FastAPI
 
-# Web App Source
-# https://github.com/ibm-developer-skills-network/LLM_application_chatbot
+# #### code improving
+# - unit testing
+# - makefile
+# - deploying docker (dockerfile)
+# - updating hg space
 
-app = Flask(__name__)
+# #### general bot impoving
+# - interact (memory)
+# - app (api, interface (html, css, js, flask))
+# - print info: gen tks
+# - handle over access
 
-@app.route('/', methods=['GET'])
-def home():
-    return render_template('index.html')
+# #### qa-bot
+# - print info: max embed tks
+# - print error: over max embed tks
 
-@app.route('/ragbot', methods=['POST'])
-def handle_prompt_with_rag():
-    data = request.get_data(as_text=True)
-    data = json.loads(data)
-    input_text = data['prompt']
+# #### sql-bot
+# - use deepseek-r1
+# - loi question: alis in chain, Big Ones, describe playlist track, cau hoi khong ro rang
+# - interact (agent check need to query db,...)
+# - MySQL, databricks, snowflake
+# - csv
+# - query check
 
-    return json.dumps({'response': 'Hello, World!'})
+# #### extending
+# - voice
+# - website
+# - multi-file rag
 
-if __name__ == '__main__':
-    app.run()
+app = FastAPI()
+
+with gr.Blocks() as interface:
+    gr.Markdown("# AI Agents for Question-Answer")
+
+    with gr.Tab("PDF Agent"):
+        pdf_page.page.render()
+
+    with gr.Tab("SQL Agent"):
+        sql_page.page.render()
+
+app = gr.mount_gradio_app(app, interface, path="/")
+
+if __name__ == "__main__":
+    interface.launch(debug=True)
